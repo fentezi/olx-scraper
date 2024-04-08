@@ -58,7 +58,6 @@ func main() {
 	}
 }
 
-<<<<<<< HEAD
 // saveImage downloads an image from the provided URL and saves it to the "image.png" file.
 //
 // Parameters:
@@ -73,44 +72,28 @@ func saveImage(url string) error {
 	}
 
 	// Send a GET request to the URL and retrieve the response.
-=======
-func saveImage(url string) error {
-	if url == "" {
-		return errors.New("image url is empty")
-	}
->>>>>>> e9aa00d7a89ad798ac39d59daaa8cd0cdabdc067
 	resp, err := http.Get(url)
 	if err != nil {
 		return errors.New("failed to get image")
 	}
 	defer resp.Body.Close()
 
-<<<<<<< HEAD
 	// Read the body of the response.
-=======
->>>>>>> e9aa00d7a89ad798ac39d59daaa8cd0cdabdc067
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-<<<<<<< HEAD
 
 	// Write the body to the "image.png" file.
-=======
->>>>>>> e9aa00d7a89ad798ac39d59daaa8cd0cdabdc067
 	err = os.WriteFile("image.png", body, 0644)
 	if err != nil {
 		return err
 	}
-<<<<<<< HEAD
 
 	// Log the success message.
 	log.Println("Image saved to image.png")
 
 	// Return nil indicating success.
-=======
-	log.Println("Image saved to image.png")
->>>>>>> e9aa00d7a89ad798ac39d59daaa8cd0cdabdc067
 	return nil
 }
 
