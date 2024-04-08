@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -17,6 +18,8 @@ const URL = "https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-k
 
 type Published struct {
 	Title         string
+	Image         string
+	City          string
 	Price         string
 	HrefPublished string
 	TimePublished string
@@ -42,6 +45,10 @@ func main() {
 		if shouldPrintPublished(&published, currentTime) {
 			// Print the published
 			printPublished(published)
+			err = saveImage(published.Image)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 
 		timeParse, _ := time.Parse("15:04", published.TimePublished)
@@ -49,6 +56,28 @@ func main() {
 		// Wait for seconds before checking for new ads
 		time.Sleep(time.Duration(rand.Intn(180)) * time.Second)
 	}
+}
+
+func saveImage(url string) error {
+	if url == "" {
+		return errors.New("image url is empty")
+	}
+	resp, err := http.Get(url)
+	if err != nil {
+		return errors.New("failed to get image")
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile("image.png", body, 0644)
+	if err != nil {
+		return err
+	}
+	log.Println("Image saved to image.png")
+	return nil
 }
 
 // getPublished fetches and returns the published ad from the HTML document.
@@ -80,11 +109,17 @@ func printPublished(published Published) {
 	// Print the title of the published ad
 	fmt.Println("Публикация: " + published.Title)
 
+	// Print the URL Image of the published ad
+	fmt.Println("Фото: " + published.Image)
+
 	// Print the URL of the published ad
 	fmt.Println("Cсылка на объявление: https://www.olx.ua/" + published.HrefPublished)
 
 	// Print the price of the published ad
 	fmt.Println("Цена: " + published.Price)
+
+	// Print the citi of the published ad
+	fmt.Println("Город: " + published.City)
 
 	// Print the current time in the format "15:04"
 	fmt.Println("Время публикации:" + published.TimePublished)
@@ -112,7 +147,7 @@ func fetchAndParseHTML(url string) (*goquery.Document, error) {
 // and time of each ad are not nil. If any of these checks fail, it exits
 // the program with an error.
 func returnPublished(doc *goquery.Document) Published {
-	var titleText, href, timeText, price string
+	var titleText, href, timeText, price, urlImage, city string
 	// Check if the document is nil
 	if doc == nil {
 		logAndExit(fmt.Errorf("document is nil"))
@@ -153,10 +188,15 @@ func returnPublished(doc *goquery.Document) Published {
 		timeSplit := strings.Split(timeAttr.Text(), " ")
 		timeText = timeSplit[len(timeSplit)-1]
 
+		urlImage, _ = s.Find(`div.css-gl6djm > img`).Attr("src")
+		city = timeSplit[0]
+
 	})
 	return Published{
 		Title:         titleText,
+		Image:         urlImage,
 		Price:         price,
+		City:          city[:len(city)-1],
 		HrefPublished: href,
 		TimePublished: timeText,
 	}
