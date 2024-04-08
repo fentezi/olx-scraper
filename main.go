@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/fentezi/olx-scraper/logger"
 )
 
 const URL = "https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-kvartir/dnepr/?currency=UAH&search%5Border%5D=created_at:desc&view=list"
@@ -25,31 +26,45 @@ type Published struct {
 	TimePublished string
 }
 
+var log *slog.Logger
+
 // main is the entry point of the program.
 // It continuously fetches and prints the published ads
 // that have a time greater than the current time.
 func main() {
 	var currentTime time.Time
+	log = logger.Logger()
 
+	log.Info(
+		"application started",
+	)
 	// Enter an infinite loop to continuously check for new ads
 	for {
 		// Fetch and parse the HTML content of the URL
 		doc, err := fetchAndParseHTML(URL)
 		if err != nil {
 			// If failed to fetch and parse the HTML, log the error and exit
-			log.Fatal(err)
+			log.Error(
+				"fetch and parse HTML",
+				logger.Err(err),
+			)
 		}
 		// Get the published ad from the HTML document
 		published := getPublished(doc)
-		log.Println(published)
 		// Check if the published ad should be printed
 		if shouldPrintPublished(&published, currentTime) {
 			// Print the published
 			printPublished(published)
 			err = saveImage(published.Image)
 			if err != nil {
-				log.Println(err)
+				log.Warn(
+					"save image",
+					logger.Err(err),
+				)
 			}
+			log.Info(
+				"published ad printed",
+			)
 		}
 
 		timeParse, _ := time.Parse("15:04", published.TimePublished)
@@ -92,8 +107,10 @@ func saveImage(url string) error {
 	}
 
 	// Log the success message.
-	log.Println("Image saved to image.png")
-
+	log.Info(
+		"saveImage",
+		slog.String("imageInfo", "image saved to images/image.png"),
+	)
 	// Return nil indicating success.
 	return nil
 }
@@ -131,12 +148,12 @@ func printPublished(published Published) {
 	fmt.Println("Фото: " + published.Image)
 
 	// Print the URL of the published ad
-	fmt.Println("Cсылка на объявление: https://www.olx.ua/" + published.HrefPublished)
+	fmt.Println("Cсылка на объявление: https://www.olx.ua" + published.HrefPublished)
 
 	// Print the price of the published ad
 	fmt.Println("Цена: " + published.Price)
 
-	// Print the citi of the published ad
+	// Print the city of the published ad
 	fmt.Println("Город: " + published.City)
 
 	// Print the current time in the format "15:04"
@@ -165,53 +182,48 @@ func fetchAndParseHTML(url string) (*goquery.Document, error) {
 // and time of each ad are not nil. If any of these checks fail, it exits
 // the program with an error.
 func returnPublished(doc *goquery.Document) Published {
-	var titleText, href, timeText, price, urlImage, city string
 	// Check if the document is nil
 	if doc == nil {
-		log.Println("document is nil")
-		os.Exit(1)
+		log.Error("document is nil")
+		return Published{}
 	}
 
 	// Find the selection of ads
 	selection := doc.Find("div#div-gpt-liting-after-promoted").Next()
 
-	// Check if the selection is nil
 	if selection == nil {
-		log.Println("selection is nil")
-		os.Exit(1)
+		log.Error("selection is nil")
+
 	}
 
-	// Iterate over each ad and print its title and time
-	selection.Each(func(i int, s *goquery.Selection) {
-		// Find the title of the ad
-		title := s.Find("h6")
+	// Find the title of the ad
+	title := selection.Find("h6")
 
-		// Check if the title is nil
-		if title == nil {
-			log.Println("title is nil")
-		}
+	// Check if the title is nil
+	if title == nil {
+		log.Warn("title is nil")
+	}
 
-		// Get the text of the title
-		titleText = title.Text()
+	// Get the text of the title
+	titleText := title.Text()
 
-		// Find the time of the ad
-		timeAttr := s.Find(`p[data-testid="location-date"]`)
+	// Find the time of the ad
+	timeAttr := selection.Find(`p[data-testid="location-date"]`)
 
-		// Check if the time is nil
-		if timeAttr == nil {
-			log.Println("time is nil")
-		}
-		price = s.Find(`p[data-testid="ad-price"]`).Text()
-		href, _ = s.Find(`a.css-z3gu2d`).Attr("href")
+	// Check if the time is nil
+	if timeAttr == nil {
+		log.Warn("time is nil")
+	}
+	price := selection.Find(`p[data-testid="ad-price"]`).Text()
+	href, _ := selection.Find(`a.css-z3gu2d`).Attr("href")
 
-		// Get the text of the time
-		timeSplit := strings.Split(timeAttr.Text(), " ")
-		timeText = timeSplit[len(timeSplit)-1]
+	// Get the text of the time
+	timeSplit := strings.Split(timeAttr.Text(), " ")
+	timeText := timeSplit[len(timeSplit)-1]
 
-		urlImage, _ = s.Find(`div.css-gl6djm > img`).Attr("src")
-		city = timeSplit[0]
+	urlImage, _ := selection.Find(`div.css-gl6djm > img`).Attr("src")
+	city := timeSplit[0]
 
-	})
 	return Published{
 		Title:         titleText,
 		Image:         urlImage,
