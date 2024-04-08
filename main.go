@@ -41,6 +41,7 @@ func main() {
 		}
 		// Get the published ad from the HTML document
 		published := getPublished(doc)
+		log.Println(published)
 		// Check if the published ad should be printed
 		if shouldPrintPublished(&published, currentTime) {
 			// Print the published
@@ -85,7 +86,7 @@ func saveImage(url string) error {
 	}
 
 	// Write the body to the "image.png" file.
-	err = os.WriteFile("image.png", body, 0644)
+	err = os.WriteFile("images/image.png", body, 0644)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func printPublished(published Published) {
 	fmt.Println("Город: " + published.City)
 
 	// Print the current time in the format "15:04"
-	fmt.Println("Время публикации:" + published.TimePublished)
+	fmt.Println("Время публикации: " + published.TimePublished)
 }
 
 // fetchAndParseHTML fetches and parses the HTML content of a given URL.
@@ -167,7 +168,8 @@ func returnPublished(doc *goquery.Document) Published {
 	var titleText, href, timeText, price, urlImage, city string
 	// Check if the document is nil
 	if doc == nil {
-		logAndExit(fmt.Errorf("document is nil"))
+		log.Println("document is nil")
+		os.Exit(1)
 	}
 
 	// Find the selection of ads
@@ -175,7 +177,8 @@ func returnPublished(doc *goquery.Document) Published {
 
 	// Check if the selection is nil
 	if selection == nil {
-		logAndExit(fmt.Errorf("selection is nil"))
+		log.Println("selection is nil")
+		os.Exit(1)
 	}
 
 	// Iterate over each ad and print its title and time
@@ -185,7 +188,7 @@ func returnPublished(doc *goquery.Document) Published {
 
 		// Check if the title is nil
 		if title == nil {
-			logAndExit(fmt.Errorf("title is nil"))
+			log.Println("title is nil")
 		}
 
 		// Get the text of the title
@@ -196,7 +199,7 @@ func returnPublished(doc *goquery.Document) Published {
 
 		// Check if the time is nil
 		if timeAttr == nil {
-			logAndExit(fmt.Errorf("time is nil"))
+			log.Println("time is nil")
 		}
 		price = s.Find(`p[data-testid="ad-price"]`).Text()
 		href, _ = s.Find(`a.css-z3gu2d`).Attr("href")
@@ -217,11 +220,6 @@ func returnPublished(doc *goquery.Document) Published {
 		HrefPublished: href,
 		TimePublished: timeText,
 	}
-}
-
-func logAndExit(err error) {
-	fmt.Println(err)
-	os.Exit(1)
 }
 
 // fetchHTML retrieves the HTML content of a given URL.
