@@ -150,7 +150,7 @@ func TelegramInit(b *tele.Bot) {
                 go parseLoop(userID, b)
                 urlState[userID] = false
 				stopChannels[userID] = make(chan struct{})
-                return ctx.Send("URL успешно добавлен.\n\n Как только подходящие объявления появятся, бот оповестит вас.")
+                return ctx.Send("URL успешно добавлен.\n\nКак только подходящие объявления появятся, бот оповестит вас.")
             } else {
                 return ctx.Send("Неверный URL. Пожалуйста, попробуйте еще раз.")
             }
