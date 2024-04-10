@@ -51,15 +51,17 @@ func returnPublished(doc *goquery.Document, log *slog.Logger) models.Published {
 	// Get the text of the time
 	timeSplit := strings.Split(timeAttr.Text(), " ")
 	timeText := timeSplit[len(timeSplit)-1]
+	
 
 	urlImage, _ := selection.Find(`div.css-gl6djm > img`).Attr("src")
-	city := timeSplit[0]
+	citySplit := strings.Split(timeAttr.Text(), "-")
+	city := citySplit[0]
 
 	return models.Published{
 		Title:         titleText,
 		Image:         urlImage,
 		Price:         price,
-		City:          city[:len(city)-1],
+		City:          city,
 		HrefPublished: href,
 		TimePublished: timeText,
 	}
