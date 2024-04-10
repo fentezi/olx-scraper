@@ -66,10 +66,6 @@ func parseLoop(id int64, b *tele.Bot) {
         if utils.ShouldPrintPublished(&published, currentTime) {
             SendMessagePhoto(b, id, &published)
             printPublished(published)
-            err = utils.SaveImage(published.Image, *log)
-            if err != nil {
-                log.Warn("failed to save image", logger.Err(err))
-            }
         }
 
         timeParse, _ := time.Parse("15:04", published.TimePublished)

@@ -1,12 +1,9 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -63,47 +60,6 @@ func FetchAndParseHTML(url string) (*goquery.Document, error) {
 
 	// Parse the HTML content and return the goquery.Document
 	return goquery.NewDocumentFromReader(html)
-}
-
-// saveImage downloads an image from the provided URL and saves it to the "image.png" file.
-//
-// Parameters:
-// - url: a string representing the URL of the image to be downloaded.
-//
-// Returns:
-// - error: an error if the download or saving process fails.
-func SaveImage(url string, log slog.Logger) error {
-	// Check if the URL is empty.
-	if url == "" {
-		return errors.New("image url is empty")
-	}
-
-	// Send a GET request to the URL and retrieve the response.
-	resp, err := http.Get(url)
-	if err != nil {
-		return errors.New("failed to get image")
-	}
-	defer resp.Body.Close()
-
-	// Read the body of the response.
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	// Write the body to the "image.png" file.
-	err = os.WriteFile("images/image.png", body, 0644)
-	if err != nil {
-		return err
-	}
-
-	// Log the success message.
-	log.Info(
-		"saveImage",
-		slog.String("imageInfo", "image saved to images/image.png"),
-	)
-	// Return nil indicating success.
-	return nil
 }
 
 // shouldPrintPublished checks if the published ad should be printed based on its time and the current time.
