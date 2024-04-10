@@ -131,13 +131,18 @@ func TelegramInit(b *tele.Bot) {
     b.Handle("/start", func(ctx tele.Context) error {
         userID := ctx.Sender().ID
         stopChannels[userID] = make(chan struct{})
-        return ctx.Send("Hello, World!")
+        return ctx.Send(fmt.Sprintf("Привет, %s! Я бот для парсинга объявлений на OLX. Чтобы начать, нажмите команду /addurl", ctx.Sender().Username))
     })
 
-    b.Handle("/addURL", func(ctx tele.Context) error {
+    b.Handle("/addurl", func(ctx tele.Context) error {
         userID := ctx.Sender().ID
         urlState[userID] = true
-        return ctx.Send("Enter the URL:")
+		message := "Введите URL-адрес для парсинга." +
+			"\n\nНа OLX выберите нужный город, категорию товаров, фильтры и параметры поиска. " +
+			 "После того, как все критерии заданы, скопируйте URL-адрес из адресной строки браузера и отправьте его боту." +
+			 "\n\nПример подходящей ссылки: https://www.olx.ua/uk/nedvizhimost/kvartiry/prodazha-kvartir/"
+
+        return ctx.Send(message)
     })
 
     b.Handle(tele.OnText, func(ctx tele.Context) error {
@@ -149,23 +154,28 @@ func TelegramInit(b *tele.Bot) {
                 go parseLoop(userID, b)
                 urlState[userID] = false
 				stopChannels[userID] = make(chan struct{})
-                return ctx.Send("URL saved: " + text)
+                return ctx.Send("URL успешно добавлен.\n\n Как только подходящие объявления появятся, бот оповестит вас.")
             } else {
-                return ctx.Send("Invalid URL. Please try again.")
+                return ctx.Send("Неверный URL. Пожалуйста, попробуйте еще раз.")
             }
         }
         return ctx.Send(ctx.Text())
     })
 
-    b.Handle("/stop", func(ctx tele.Context) error {
+    b.Handle("/stopparse", func(ctx tele.Context) error {
         userID := ctx.Sender().ID
         if stopChan, ok := stopChannels[userID]; ok {
             stopChan <- struct{}{}
-            return ctx.Send("Parsing stopped")
+            return ctx.Send("Парсер остановлен!")
         } else {
-			return ctx.Send("Parsing not started yet")
+			return ctx.Send("Парсинг еще не начат!")
 		}
     })
+
+	b.Handle("/help", func(ctx tele.Context) error {
+		helpMessage := "Доступные команды:\n/addurl - добавить ссылку на категорию или поиск OLX для отслеживания новых объявлений. Бот будет парсить указанную страницу и оповещать о свежих публикациях\n/stopparse - остановить парсинг\n/help - помощь"
+		return ctx.Send(helpMessage)
+	})
 
     b.Start()
 }
