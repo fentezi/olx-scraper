@@ -81,7 +81,7 @@ func parseLoop(id int64, b *tele.Bot) {
                 "stopping parsing",
                 "id", id,
             )
-			delete(stopChannels, id)
+	    delete(stopChannels, id)
             return
         default:
             sleepDuration := time.Duration(rand.Intn(120)) * time.Second
@@ -94,7 +94,7 @@ func parseLoop(id int64, b *tele.Bot) {
                     "stopping parsing",
                     "id", id,
                 )
-				delete(stopChannels, id)
+		delete(stopChannels, id)
                 return
             case <-timer.C:
             }
