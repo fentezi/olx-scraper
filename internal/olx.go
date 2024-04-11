@@ -45,7 +45,7 @@ func returnPublished(doc *goquery.Document, log *slog.Logger) models.Published {
 	if timeAttr == nil {
 		log.Warn("time is nil")
 	}
-	price := selection.Find(`p[data-testid="ad-price"]`).Text()
+	price := strings.Replace(selection.Find(`p[data-testid='ad-price'].css-tyui9s.er34gjf0`).Text(), ".css-1vxklie{color:#7F9799;font-size:12px;line-height:16px;font-weight:100;display:block;width:100%;text-align:right;}Договірна", "Договірна", -1)
 	href, _ := selection.Find(`a.css-z3gu2d`).Attr("href")
 
 	// Get the text of the time
@@ -54,7 +54,11 @@ func returnPublished(doc *goquery.Document, log *slog.Logger) models.Published {
 	
 
 	urlImage, _ := selection.Find(`div.css-gl6djm > img`).Attr("src")
-	citySplit := strings.Split(timeAttr.Text(), "-")
+	log.Info(
+		"timeSplit",
+		"text", price,
+	)
+	citySplit := strings.Split(timeAttr.Text(), " - ")
 	city := citySplit[0]
 
 	return models.Published{
