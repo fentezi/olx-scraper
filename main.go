@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/chromedp"
 	"github.com/fentezi/olx-scraper/internal"
 	"github.com/fentezi/olx-scraper/logger"
 	"github.com/fentezi/olx-scraper/models"
@@ -48,10 +50,7 @@ func main() {
 func parseLoop(id int64, b *tele.Bot) {
     var currentTime time.Time
     stopChan := stopChannels[id]
-	log.Info(
-		"stop channels",
-		"len", len(stopChannels),
-	)
+
     for {
         log := logger.Logger()
         log.Info("fetching ads", "id", id)
@@ -64,8 +63,29 @@ func parseLoop(id int64, b *tele.Bot) {
 
         published := internal.GetPublished(doc, *log)
         if utils.ShouldPrintPublished(&published, currentTime) {
-            SendMessagePhoto(b, id, &published)
-            printPublished(published)
+            var phone string
+            ctx, cancel := chromedp.NewContext(
+            context.Background(),
+        )
+            linkSelector := `a[data-testid="contact-phone"]`
+            _ = chromedp.Run(ctx, 
+                chromedp.Navigate("https://www.olx.ua" + published.HrefPublished),
+                chromedp.Sleep(5 * time.Second),
+                chromedp.Click(`button[data-cy="ad-contact-phone"]`, chromedp.ByQuery),
+                chromedp.TextContent(linkSelector, &phone),
+            )
+            cancel()
+            SendMessagePhoto(b, id, &published, phone)
+            log.Info(
+                "sent message",
+                "id", id,
+                "title", published.Title,
+                "price", published.Price,
+                "city", published.City,
+                "time", published.TimePublished,
+                "phone", phone,
+                "href", published.HrefPublished,
+            )
         }
 
         timeParse, _ := time.Parse("15:04", published.TimePublished)
@@ -98,15 +118,28 @@ func parseLoop(id int64, b *tele.Bot) {
     }
 }
 
-func SendMessagePhoto(b *tele.Bot, id int64, publish *models.Published) {
+func SendMessagePhoto(b *tele.Bot, id int64, publish *models.Published, phone string) {
     splitPhoto := strings.Split(publish.Image, ";")
-    photo := &tele.Photo{
+    var photo *tele.Photo
+    if phone == "" {
+        photo = &tele.Photo{
+            File: tele.FromURL(splitPhoto[0]),
+            Caption: publish.Title + "\n" +
+                "Цена: " + publish.Price + "\n" +
+                "Город: " + publish.City + "\n" +
+                "Время публикации: " + publish.TimePublished,
+    }
+    } else {
+        photo = &tele.Photo{
         File: tele.FromURL(splitPhoto[0]),
         Caption: publish.Title + "\n" +
             "Цена: " + publish.Price + "\n" +
             "Город: " + publish.City + "\n" +
+            "Номер телефона: " + phone + "\n" +
             "Время публикации: " + publish.TimePublished,
     }
+    }
+    
 
     btnURL := tele.InlineButton{
         Unique: "myButton",
@@ -176,27 +209,6 @@ func TelegramInit(b *tele.Bot) {
     b.Start()
 }
 
-// printPublished prints the published ad details to the console.
-// It takes a Published struct as input and prints the title, URL, and current time.
-func printPublished(published models.Published) {
-    // Print the title of the published ad
-    fmt.Println("Публикация: " + published.Title)
-
-    // Print the URL Image of the published ad
-    fmt.Println("Фото: " + published.Image)
-
-    // Print the URL of the published ad
-    fmt.Println("Cсылка на объявление: https://www.olx.ua" + published.HrefPublished)
-
-    // Print the price of the published ad
-    fmt.Println("Цена: " + published.Price)
-
-    // Print the city of the published ad
-    fmt.Println("Город: " + published.City)
-
-    // Print the current time in the format "15:04"
-    fmt.Println("Время публикации: " + published.TimePublished)
-}
 
 func isValidURL(str string) bool {
 	pattern := `^(https?://)?(www\.)?olx\.(ua|pl|bg|ro|pt|com|co\.za|com\.br|com\.pk|lt|lv|hr|kz|uz|by|md|az)/.*$`

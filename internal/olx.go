@@ -54,10 +54,6 @@ func returnPublished(doc *goquery.Document, log *slog.Logger) models.Published {
 	
 
 	urlImage, _ := selection.Find(`div.css-gl6djm > img`).Attr("src")
-	log.Info(
-		"timeSplit",
-		"text", price,
-	)
 	citySplit := strings.Split(timeAttr.Text(), " - ")
 	city := citySplit[0]
 
