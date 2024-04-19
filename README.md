@@ -1,35 +1,35 @@
 # OLX Parser Telegram Bot
 
-This is a Telegram bot that parses and sends notifications about the latest ads published on the OLX website. The bot scrapes the specified OLX category or search URL and sends an alert with the ad details, including an image, title, price, city, and a direct link to the ad.
+Это бот для Telegram, который анализирует и отправляет уведомления о последних объявлениях, опубликованных на сайте OLX. Бот анализирует указанную категорию OLX или URL-адрес поиска и отправляет оповещение с информацией об объявлении, включая изображение, номер телефона, заголовок, цену, город и прямую ссылку на объявление.
 
-## Features
+## Особенности
 
-- Parse and monitor new ads on OLX based on user-provided URL
-- Send notifications with ad details (image, title, price, city, direct link)
-- Inline keyboard button to open the ad URL
-- Stop parsing command to pause monitoring
+- Анализ и мониторинг новых объявлений на OLX на основе URL, предоставленного пользователем
+- Отправка уведомлений с информацией об объявлении (изображение, название, цена, город, прямая ссылка)
+- Кнопка на клавиатуре для открытия URL-адреса объявления
+- Команда остановки парсинга для приостановки мониторинга
 
-## Installation
+## Установка
 
-1. Clone the repository:
+1. Клонируем репозиторий:
 
 ```bash
 git clone https://github.com/fentezi/olx-scraper
 ```
 
-2. Install dependencies:
+2. Устанавливаем зависимости:
 
 ```bash
 go get ./...
 ```
 
-3. Set the Telegram bot token as an environment variable:
+3. Устанавливаем token bot для переменной окружения:
 
 ```bash
 export TOKEN=your-bot-token
 ```
 
-4. Build and run the bot:
+4. Запускаем скрипт:
 
 ```bash
 go build ./olx-scraper
